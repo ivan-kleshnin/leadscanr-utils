@@ -1,22 +1,15 @@
 #!/bin/bash
 
-# Extract version from pyproject.toml
-VERSION=$(grep -Po '(?<=^version = ")[^"]+' pyproject.toml)
-
-echo "Releasing version $VERSION"
-
-# 1️⃣ Build wheel
+# 1. Build the wheel
 uv build
 
-# 2️⃣ Commit source changes
+# 2. Commit any source changes
 git add .
-git commit -m "Prepare release $VERSION"
+git commit -m "Prepare release $1"
 
-# 3️⃣ Tag release
-git tag v$VERSION
+# 3. Tag the release
+git tag $1
 
-# 4️⃣ Push commit and tag
+# 4. Push commits and tag
 git push origin main
-git push origin v$VERSION
-
-echo "Release $VERSION ready! Upload wheel to GitHub release."
+git push origin $1
