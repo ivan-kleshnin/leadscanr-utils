@@ -1,0 +1,25 @@
+# --------------------
+# Common OS / Editor
+# --------------------
+.DS_Store
+.git/
+.idea/
+
+# --------------------
+# Python
+# --------------------
+.venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+*.egg
+dist/
+build/
+uv.lock
+
+# --------------------
+# Project-specific
+# --------------------
+ignore/
