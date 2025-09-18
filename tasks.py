@@ -1,7 +1,6 @@
 from invoke import task
 from pathlib import Path
 import toml
-import subprocess
 from typing import TypedDict
 
 # HELPERS ------------------------------------------------------------------------------------------
@@ -43,10 +42,10 @@ def build(c):
 @task
 def tag(c):
     project = get_project()
-    c.run(f"git tag {project['version']}")
-    c.run(f"git push origin {project['version']}")
+    c.run(f"git tag {'v' + project['version']}")
+    c.run(f"git push origin {'v' + project['version']}")
 
 @task(pre=[build, tag])
 def release(c):
     project = get_project()
-    c.run(f"gh release create {project['version']} dist/*.whl")
+    c.run(f"gh release create {'v' + project['version']} dist/*.whl")
