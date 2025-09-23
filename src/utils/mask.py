@@ -5,14 +5,18 @@ EMAIL = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", flags=re.I
 MENTION = re.compile(r"@[A-Za-z0-9_]+")
 PHONE = re.compile(
     r"""
-    (?<![\d\w])                 # Negative lookbehind to prevent partial matches
-    (?:                         # Non-capturing group for the whole number
-      \+?\d{1,3}                # Optional country code (+7)
-      (?:[\s.-]?\(?\d{2,4}\)?[\s.-]?) # Optional area code
-      \d{2,4}                   # First part of the main number
-      (?:[\s.-]?\d{2,3}){2,4}   # Flexible, repeated groups of digits
+    (?<![\d\w]) # Negative lookbehind to prevent partial matches
+    (?:
+      # Option 1: Must start with a '+'
+      \+\d{1,3}(?:[\s-]?\(?\d{2,4}\)?[\s-]?)*\d{2,4}(?:[\s-]?\d{2,4}){1,3}
+
+    | # Option 2: Must contain an opening parenthesis '('
+      (?:\d{1,3}[\s-]?)?\(\d{2,4}\)[\s-]?\d{2,4}(?:[\s-]?\d{2,4}){1,3}
+
+    | # Option 3: Russian mobile starting with 8 followed by 10 digits
+      8[\s-]?\d{3}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}
     )
-    (?![\d\w])                  # Negative lookahead to prevent partial matches
+    (?![\d\w]) # Negative lookahead to prevent partial matches
     """,
     flags=re.VERBOSE | re.IGNORECASE,
 )
