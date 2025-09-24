@@ -7,7 +7,7 @@ def fold_numbers(text: str) -> str:
     return re.sub(pattern, replacer, text)
 
 def fold_scale_units(text: str) -> str:
-    pattern = r"(\d+[,.]?\d*)(?:-(\d+[,.]?\d*))?\s+тыс\.?"
+    pattern = r"(\d+[,.]?\d*)(?:\s*[-–—~]\s*(\d+[,.]?\d*))?\s+тыс\.?"
 
     def replacer(match) -> str:
         num1_str = match.group(1)
