@@ -1,10 +1,8 @@
 import re
 
 def fold_numbers(text: str) -> str:
-    def replacer(match):
-        return match.group(0).replace(".", "").replace(",", "").replace(" ", "")
-    pattern = r"\b\d{1,3}([., ]\d{3})+\b"
-    return re.sub(pattern, replacer, text)
+    pattern = r"\b\d{1,3}(?:[.,`' ]\d{3})+\b"
+    return re.sub(pattern, lambda m: "".join(c for c in m.group(0) if c.isdigit()), text)
 
 def fold_scale_units(text: str) -> str:
     pattern = r"(\d+[,.]?\d*)(?:\s*[-–—~]\s*(\d+[,.]?\d*))?\s+тыс\.?"
@@ -22,4 +20,4 @@ def fold_scale_units(text: str) -> str:
     return re.sub(pattern, replacer, text, flags=re.IGNORECASE)
 
 def fold_currencies(text: str) -> str:
-    return text.replace("рублей", "₽")
+    return re.sub(r"(\bрублей\b|\bруб\.?)", "₽", text)
