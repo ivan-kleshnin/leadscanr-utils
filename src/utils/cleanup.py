@@ -1,6 +1,6 @@
+import emoji
 import re
 import regex
-import demoji
 
 SPACES = re.compile(r"[ \u00A0]+")
 NEWLINES = re.compile(r"\n{3,}")
@@ -24,23 +24,38 @@ def clean_text(text: str) -> str:
     return text
 
 def starts_with_emoji_cluster(text: str) -> bool:
-    m = regex.match(r"\X", text) # Match first grapheme cluster
+    """
+    Checks if the first grapheme cluster contains at least one emoji.
+    💻 → 1 codepoint, 1 grapheme cluster
+    ⚡️ → 2 codepoints (⚡ + variation selector 16), 1 grapheme cluster
+    👩‍💻 → 3 codepoints (👩 + ZWJ + 💻), 1 grapheme cluster
+    á  → 2 codepoints (a + combining accent), 1 grapheme cluster
+    grapheme cluster
+    codepoint ~= character
+    """
+    stripped = text.lstrip()
+    if not stripped:
+        return False
+    m = regex.match(r"\X", stripped) # captures a grapheme (one or more "codepoints")
     if not m:
         return False
     cluster = m.group(0)
-    return bool(demoji.findall(cluster))
+    return any(emoji.is_emoji(codepoint) for codepoint in cluster) # iterates over "codepoints"
 
 def clean_emojis(text: str) -> str:
     result_lines = []
     for line in text.splitlines():
         stripped = line.lstrip()
-        if stripped and starts_with_emoji_cluster(stripped):
-            content = demoji.replace(stripped, "").strip()
-            if content:  # only add bullet if text remains
+        if not stripped:
+            result_lines.append("")
+            continue
+        if starts_with_emoji_cluster(stripped):
+            content = emoji.replace_emoji(stripped, "").strip()
+            if content:
                 line = "- " + content
             else:
-                line = ""  # skip empty/decorative line
+                line = ""
         else:
-            line = demoji.replace(stripped, " ").strip()
+            line = emoji.replace_emoji(stripped, " ").strip()
         result_lines.append(line)
     return "\n".join(result_lines)

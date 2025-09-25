@@ -22,4 +22,5 @@ uv.lock
 # --------------------
 # Project-specific
 # --------------------
+corpus/
 ignore/
