@@ -2,11 +2,11 @@ import emoji
 import re
 import regex
 
-SPACES = re.compile(r"[ \u00A0]+")
+NBRSPACE = re.compile(r"\u00A0+")
 NEWLINES = re.compile(r"\n{3,}")
-NL_SPACES_NL = re.compile(r" ?\n ?")
 ALNUM = re.compile(r"\w")
 WHITESPACE_SPLIT = re.compile(r"(\s+)")
+WHITESPACE_LEADING = re.compile(r"^[ \t]+", flags=re.MULTILINE)
 TOKEN_KEEP = re.compile(r"[\w\[\](){}#]")
 SYMBOL_REPLACEMENTS = [
     ("_", "__"),
@@ -17,9 +17,14 @@ SYMBOL_REPLACEMENTS = [
 
 def denoise(text: str) -> str:
     """
-    Cleans decorative sequences (*, =, -) while preserving formatting,
-    converts excessive runs to Markdown-like equivalents, and removes
-    lines without alphanumeric characters.
+    Cleans decorative sequences (*, =, -) while preserving formatting:
+    - Converts ***word*** → **word**
+    - Converts ===word=== → ==word==
+    - Converts ---word--- → --word--
+    - Removes decoration-only tokens
+    - Removes trailing whitespace (leading whitespace is semantic)
+    - Collapses internal whitespace (between tokens)
+    - Drops lines without alphanumeric characters
     """
     def clean_token(token: str) -> str:
         if TOKEN_KEEP.search(token):
@@ -28,33 +33,35 @@ def denoise(text: str) -> str:
                 token = re.sub(fr"^{esc}{{3,}}", replacement, token)
                 token = re.sub(fr"{esc}{{3,}}$", replacement, token)
         else:
-            for symbol, _ in SYMBOL_REPLACEMENTS:
-                token = token.replace(symbol, "")
+            token = re.sub(r"[*=\-]+", "", token)
         return token
 
     def clean_line(line: str) -> str:
-        tokens = WHITESPACE_SPLIT.split(line)
-        cleaned = "".join(clean_token(t) for t in tokens)
-        return cleaned if ALNUM.search(cleaned) else ""
+        # Capture leading spaces
+        m = re.match(r"^(\s*)", line)
+        leading = m.group(0) if m else ""
+        # Split into tokens, collapse internal spaces
+        tokens = WHITESPACE_SPLIT.split(line.lstrip())
+        cleaned = " ".join(clean_token(t) for t in tokens if not t.isspace())
+        return leading + cleaned.rstrip() if ALNUM.search(cleaned) else ""
 
     return "\n".join(clean_line(line) for line in text.splitlines())
 
 def clean_text(text: str) -> str:
     """
-    1. Denoise decorators, drop meaningless lines
-    2. Replace all emojis with spaces.
-    3. Remove spaces around newlines.
-    4. Collapse 2+ spaces into 1 space.
-    5. Collapse 3+ newlines into 2 newlines.
-    6. Strip leading/trailing spaces.
+    1. Replace leading emojis with "- " and other emojis with " "
+    2. Denoise text
+    3. Collapse 3+ newlines into 2 newlines
+    4. Normalize leading whitespace to 2 spaces
+    5. Strip text-level leading/trailing spaces
     """
     if not text.strip():
         return ""
-    text = denoise(text)
+    text = NBRSPACE.sub(" ", text)
     text = clean_emojis(text)
-    text = SPACES.sub(" ", text)
-    text = NL_SPACES_NL.sub("\n", text)
+    text = denoise(text)
     text = NEWLINES.sub(r"\n\n", text)
+    text = WHITESPACE_LEADING.sub("  ", text)
     text = text.strip()
     return text
 
@@ -80,17 +87,14 @@ def starts_with_emoji_cluster(text: str) -> bool:
 def clean_emojis(text: str) -> str:
     result_lines = []
     for line in text.splitlines():
-        stripped = line.lstrip()
-        if not stripped:
-            result_lines.append("")
-            continue
-        if starts_with_emoji_cluster(stripped):
-            content = emoji.replace_emoji(stripped, "").strip()
+        lline = line.lstrip()
+        if starts_with_emoji_cluster(lline):
+            content = emoji.replace_emoji(lline, "")
             if content:
                 line = "- " + content
             else:
                 line = ""
         else:
-            line = emoji.replace_emoji(stripped, " ").strip()
+            line = emoji.replace_emoji(line, " ")
         result_lines.append(line)
     return "\n".join(result_lines)
