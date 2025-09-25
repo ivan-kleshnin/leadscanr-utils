@@ -78,7 +78,6 @@ def clean_emojis(text: str) -> str:
     result_lines = []
     for line in text.splitlines():
         lline = line.lstrip()
-        print("!!!", repr(lline), starts_with_emoji_cluster(lline))
         if starts_with_emoji_cluster(lline):
             content = emoji.replace_emoji(lline, "")
             if content:
