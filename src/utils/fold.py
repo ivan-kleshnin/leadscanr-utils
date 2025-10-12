@@ -20,4 +20,4 @@ def fold_scale_units(text: str) -> str:
     return re.sub(pattern, replacer, text, flags=re.IGNORECASE)
 
 def fold_currencies(text: str) -> str:
-    return re.sub(r"(\bрублей\b|\bруб\.?)", "₽", text)
+    return re.sub(r"(?<=[\d\s])(?:руб(?:лей|\.)?|rub)(?=\W|$)", " ₽", text, flags=re.IGNORECASE)
