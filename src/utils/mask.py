@@ -1,11 +1,23 @@
 import re
 
-URL = re.compile(r"(https?://\S+|www\.\S+)", flags=re.IGNORECASE)
+URL = re.compile(
+    r"""
+    (?:                                   # Entire URL
+      https?://[^\s'">]+(?<!\))           # Option 1: http(s):// ... but not ending with ')'
+    | www\.[^\s'">]+(?<!\))               # Option 2: www....  but not ending with ')'
+    |                                     # Option 3:
+      (?:[a-z0-9-]+\.)+                   #   Subdomain(s)
+      (?:com|org|net|io|me|co|dev|ai|be)  #   Whitelist TLDs
+      (?:/[^\s'">]*)?(?<!\))              #   Optional path  
+    )
+    """,
+    flags=re.VERBOSE | re.IGNORECASE,
+)
 EMAIL = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", flags=re.IGNORECASE)
 MENTION = re.compile(r"@[A-Za-z0-9_]+")
 PHONE = re.compile(
     r"""
-    (?<![\d\w]) # Negative lookbehind to prevent partial matches
+    (?<!\w) # Negative lookbehind to prevent partial matches
     (?:
       # Option 1: Must start with a '+'
       \+\d{1,3}(?:[\s-]?\(?\d{2,4}\)?[\s-]?)*\d{2,4}(?:[\s-]?\d{2,4}){1,3}
@@ -16,7 +28,7 @@ PHONE = re.compile(
     | # Option 3: Russian mobile starting with 8 followed by 10 digits
       8[\s-]?\d{3}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}
     )
-    (?![\d\w]) # Negative lookahead to prevent partial matches
+    (?!\w) # Negative lookahead to prevent partial matches
     """,
     flags=re.VERBOSE | re.IGNORECASE,
 )
