@@ -2,36 +2,33 @@ import emoji
 import re
 import regex
 
-ALNUM = re.compile(r"\w")
+ALNUM = re.compile(r"[а-яa-z]", flags=re.IGNORECASE)
 NBRSPACE = re.compile(r"\u00A0+")
-WHITESPACES = re.compile(r"[ \t]{3,}")
-INTRA_SPACE = re.compile(r"(?<=\S)[ \t]{2,}(?=\S)")
+MDASH = re.compile(r"—")
+INIT_SPACE = re.compile(r"^[ \t]{3,}", flags=re.MULTILINE)
+TRAIL_SPACE = re.compile(r"[ \t]+$", flags=re.MULTILINE)
+INTRA_SPACE = re.compile(r"(?<=\S)[ \t]{2,}(?=\S)", flags=re.MULTILINE)
 NEWLINES = re.compile(r"\n{3,}")
-SYMBOL_REPLACEMENTS = [
-    # ("_", "__"),
-    ("*", "**"),
-    ("=", "=="),
-    ("-", "--")
-]
+BULLET = re.compile(r"^[-–◦•·*+][ \t]+", flags=re.MULTILINE)
+ASTERISKS = re.compile(r"(?:\*{2,}|={2,}|-{2,}|_{2,})", flags=re.VERBOSE)
 
 def denoise(text: str) -> str:
-    """
-    1. Collapse repeated decorative sequences (-- --, ** **, == ==) into their double form
-    2. Collapse 3+ symbols to their double form
-    3. Remove trailing whitespace (leading is preserved)
-    4. Collapse internal whitespace between tokens to single space
-    5. Unify leading whitespace to 2 spaces
-    """
+    # 1. Replace NBRSPACE with normal space
+    text = NBRSPACE.sub(" ", text)
+    # 2. Replace MDASH with normal NDASH
+    text = MDASH.sub("–", text)
+    # 3. Replace common decorative chars
+    text = ASTERISKS.sub("", text)
+    # 4. Unify bullets
+    text = BULLET.sub("- ", text)
+    # 5. Unify RUB + DIGIT cases
+    text = re.sub("(?<=\d)₽", " ₽", text)
+    # 6. Drop empty lines and rtrim the rest
     lines = text.splitlines()
-    clean_lines = []
-    for line in lines:
-        if ALNUM.search(line):
-            for symbol, replacement in SYMBOL_REPLACEMENTS:
-                line = re.sub(rf"{re.escape(symbol)}{{3,}}", replacement, line)
-            clean_lines.append(line.rstrip())
-        else:
-            clean_lines.append("")
-    return "\n".join(clean_lines)
+    return "\n".join(
+        line.rstrip() if ALNUM.search(line) else ""
+        for line in lines
+    )
 
 def clean_text(text: str) -> str:
     """
@@ -44,12 +41,12 @@ def clean_text(text: str) -> str:
     if not text.strip():
         return ""
     text = clean_emojis(text)
-    text = NBRSPACE.sub(" ", text)
     text = denoise(text)
-    text = WHITESPACES.sub("  ", text)
+    text = INIT_SPACE.sub("  ", text)
     text = INTRA_SPACE.sub(" ", text)
+    text = TRAIL_SPACE.sub("", text)
     text = NEWLINES.sub("\n\n", text)
-    text = text.strip()
+    text = text.strip(" \t\n\r\f\v-–")
     return text
 
 def starts_with_emoji_cluster(text: str) -> bool:
