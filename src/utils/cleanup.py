@@ -2,7 +2,7 @@ import emoji
 import re
 import regex
 
-ALNUM = re.compile(r"[а-яa-z]", flags=re.IGNORECASE)
+ALNUM = re.compile(r"[а-яa-z0-9]", flags=re.IGNORECASE)
 NBRSPACE = re.compile(r"\u00A0+")
 MDASH = re.compile(r"—")
 INIT_SPACE = re.compile(r"^[ \t]{3,}", flags=re.MULTILINE)
@@ -21,16 +21,20 @@ def denoise(text: str) -> str:
     text = ASTERISKS.sub("", text)
     # 4. Unify bullets
     text = BULLET.sub("- ", text)
-    # 5. Unify RUB + DIGIT cases
-    text = re.sub("(?<=\d)₽", " ₽", text)
-    # 6. Drop empty lines and rtrim the rest
+    # 5. Unify secondary whitespace cases
+    text = re.sub(r"(?<=\d)р\b", " р", text)
+    text = re.sub(r"(?<=\d)(₽|\$|€)", r" \1", text)
+    text = re.sub(r"(?<=\d)м2\b", " м2", text)
+    # 6. Collapse common "от NUM до NUM" cases
+    text = re.sub(r"\bот\s+(\d+)\d\s+до\s+(\d+)", r"\1–\2", text, flags=re.IGNORECASE)
+    # 7. Drop empty lines and rtrim the rest
     lines = text.splitlines()
     return "\n".join(
         line.rstrip() if ALNUM.search(line) else ""
         for line in lines
     )
 
-def clean_text(text: str) -> str:
+def normalize_whitespace(text: str) -> str:
     """
     1. Denoise emojis
     2. Replace NBR space with normal space
@@ -40,8 +44,6 @@ def clean_text(text: str) -> str:
     """
     if not text.strip():
         return ""
-    text = clean_emojis(text)
-    text = denoise(text)
     text = INIT_SPACE.sub("  ", text)
     text = INTRA_SPACE.sub(" ", text)
     text = TRAIL_SPACE.sub("", text)
