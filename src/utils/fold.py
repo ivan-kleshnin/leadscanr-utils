@@ -22,25 +22,22 @@ def fold_numbers(text: str) -> str:
 
 def fold_scale_units(text: str) -> str:
     pattern = r"""
-    (?:от\s+)?              # optional 'от ' at the start
-    (\d+)                   # first integer number
-    (?:                     # optional range separator
-        \s*(?:[-–—~]|до)\s* # separator: -, –, —, ~ or 'до'
-        (\d+)               # second integer number
+    (\d+(?:[.,]\d+)?)       # first number
+    (?:
+        \s*(?:[-–—~]|до)\s* # optional range separator
+        (\d+(?:[.,]\d+)?)   # second number
     )?
     \s*                     # optional spaces
     тыс(?:ячи?|\.|\b)       # 'тыс', 'тысячи', 'тыс.' or boundary
     """
 
-    def replacer(match) -> str:
-        num1_str = match.group(1)
-        num2_str = match.group(2)
-        num1 = int(float(num1_str.replace(',', '.')) * 1000)
-        if num2_str:
-            num2 = int(float(num2_str.replace(',', '.')) * 1000)
-            return f"{num1}–{num2}"
-        else:
-            return str(num1)
+    def replacer(match: re.Match) -> str:
+        num1 = float(match.group(1).replace(',', '.')) * 1000
+        num2 = match.group(2)
+        if num2:
+            num2 = float(num2.replace(',', '.')) * 1000
+            return f"{int(num1)}–{int(num2)}"
+        return str(int(num1))
 
     return re.sub(pattern, replacer, text, flags=re.IGNORECASE | re.VERBOSE)
 
@@ -50,7 +47,7 @@ def fold_currencies(text: str) -> str:
         r"""
         (\d+)                             # integer number
         \s*                               # optional space
-        (?:р|руб|рублей|rub)\.?           # р, руб, рублей, rub + optional dot
+        (?:рублей|руб|р|rub)\.?           # р, руб, рублей, rub + optional dot
         (?=\W|$)                          # followed by non-word or end
         """,
         r"\1 ₽",
