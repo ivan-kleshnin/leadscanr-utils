@@ -1,5 +1,5 @@
 # Informal tests to check the function's behavior
-from utils.mask import mask_contacts
+from textutils.mask import mask_contacts
 
 tests = [
     # Positive tests for phone numbers
