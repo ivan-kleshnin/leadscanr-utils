@@ -1,6 +1,6 @@
 [project]
 name = "leadscanr-utils"
-version = "0.11.0"
+version = "0.11.1"
 description = "..."
 readme = "README.md"
 authors = [
@@ -11,8 +11,8 @@ dependencies = [
     "emoji>=2.15.0",
     "regex>=2025.9.18",
 ]
-[tool.uv.workspace]
-members = ["exampole", "sample"]
+#[tool.uv.workspace]
+#members = ["example", "sample"]
 
 [build-system]
 requires = ["hatchling"]
@@ -26,5 +26,5 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = [
-  "src/utils",
+  "src/textutils",
 ]
