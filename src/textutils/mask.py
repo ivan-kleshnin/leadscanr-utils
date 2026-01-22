@@ -43,8 +43,8 @@ def mask_contacts(text: str) -> str:
     """
     if not text:
         return ""
-    text = URL.sub("[URL]", text)
     text = EMAIL.sub("[EMAIL]", text)
+    text = URL.sub("[URL]", text)
     text = MENTION.sub("[MENTION]", text)
     text = PHONE.sub("[PHONE]", text)
     text = re.sub(r"(?<=ИНН: )(\d+)", "[ID]", text, flags=re.IGNORECASE)
