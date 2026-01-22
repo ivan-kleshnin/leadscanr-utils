@@ -9,7 +9,7 @@ INIT_SPACE = re.compile(r"^[ \t]{3,}", flags=re.MULTILINE)
 TRAIL_SPACE = re.compile(r"[ \t]+$", flags=re.MULTILINE)
 INTRA_SPACE = re.compile(r"(?<=\S)[ \t]{2,}(?=\S)", flags=re.MULTILINE)
 NEWLINES = re.compile(r"\n{3,}")
-BULLET = re.compile(r"^\s+[-–◦•·*+](?=[\s\w])", flags=re.MULTILINE)
+BULLET = re.compile(r"^\s*[-–◦•·*+](?=[\s\w])", flags=re.MULTILINE)
 ASTERISKS = re.compile(r"(?:\*{2,}|={2,}|-{2,}|_{2,})", flags=re.VERBOSE)
 
 def normalize_whitespace(text: str) -> str:
